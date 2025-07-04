@@ -19,7 +19,10 @@ gnome = import('gnome')
 glib = dependency('glib-2.0')
 gobject = dependency('gobject-2.0')
 sqlite = dependency('sqlite3')
-plist = dependency('libplist')
+plist = dependency('libplist-2.0', required: false)
+if not plist.found()
+  plist = dependency('libplist')
+endif
 gmodule = dependency('gmodule-2.0')
 zlib = dependency('zlib')
 udev = dependency('libudev', required: get_option('udev'))
@@ -84,7 +87,9 @@ conf_data.set_quoted('TMPMOUNTDIR', '/tmp/ipod')
 config_h = configure_file(output: 'config.h',
                           configuration: conf_data)
 configuration_inc = include_directories('.')
-add_global_arguments('-DLIBGPOD_BLOB_DIR="/usr/lib64/libgpod"', language : 'c')
+libgpod_blob_dir = get_option('libdir') / 'libgpod'
+add_global_arguments('-DLIBGPOD_BLOB_DIR="@0@"'.format(libgpod_blob_dir),
+  language: 'c')
 
 subdir('po')
 subdir('src')
