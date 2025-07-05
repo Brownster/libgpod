@@ -28,7 +28,22 @@ zlib = dependency('zlib')
 udev = dependency('libudev', required: get_option('udev'))
 
 compiler = meson.get_compiler('c')
-sgutils = compiler.find_library('libsgutils', required: get_option('sgutils'))
+sgutils = compiler.find_library('libsgutils', required: false)
+if not sgutils.found()
+  sgutils = compiler.find_library('libsgutils2', required: false)
+endif
+if not sgutils.found()
+  ldout = run_command('sh', '-c',
+    'ldconfig -p 2>/dev/null | grep -oE "/[^ ]*libsgutils[^ ]*\\.so[^ ]*" | head -n1',
+    check: false)
+  ldpath = ldout.stdout().strip()
+  if ldpath != ''
+    sgutils = declare_dependency(link_args: ldpath)
+  endif
+endif
+if get_option('sgutils').enabled() and not sgutils.found()
+  error('libsgutils library not found')
+endif
 
 gdk_pixbuf = dependency('gdk-pixbuf-2.0', required: get_option('artwork-db'))
 libxml = dependency('libxml-2.0', required: get_option('sysinfo'))
